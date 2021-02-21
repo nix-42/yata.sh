@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.1.0"
+__version="0.1.1"
 
 # General variables
 
@@ -39,19 +39,22 @@ cat << EOF
 
   Description: CLI-wrapper for youtube-dl written on Shell
   Usage: $(basename $0) [OPTIONS] -d [URL]                                          
-                                                                                   |OPTIONS|
- +----+------------+-----------+-----------------------------------------------------------+
- | -d | --download | download  | Download and convert single video                         |
- | -p | --playlist | playlist  | Download and convert playlist                             |
- | -a | --audio    | audio     | Set audio extension [default: mp3; best, aac, flac, etc]  |
- | -b | --bitrate  | bitrate   | Set audio bitrate [default: 128K; 256K, 320K, best]       |
- | -s | --asr      | asr       | Set audio samplerate [default: 48000; 44000, 41000]       |
- | -p | --path     | path      | Set path [default: ~/Music/yata]                          |
- | -v | --verbose  | verbose   | Turn off quiet mode                                       |
- | -1 | --sox      | sox       | Merge audio files from playlist                           |
- | -v | --version  | version   | Show script version                                       |
- | -h | --help     | help      | Show this message                                         |
- +----+------------+-----------+-----------------------------------------------------------+
+                                                           |OPTIONS|
+ +----+------------+-----------+-----------------------------------+
+ | -d | --download | download  | Download and convert single video |
+ | -p | --playlist | playlist  | Download and convert playlist     |
+ | -a | --audio    | audio     | Set audio extension               | 
+ |    |            |           | [default: mp3; aac, flac...]      |
+ | -b | --bitrate  | bitrate   | Set audio bitrate                 |  
+ |    |            |           | [default: 128K; 256K, 320K]       |
+ | -s | --asr      | asr       | Set audio samplerate              |
+ |    |            |           | [default: 48000; 44000, 41000]    |
+ | -p | --path     | path      | Set path [default: ~/Music/yata]  |
+ | -v | --verbose  | verbose   | Turn off quiet mode               |
+ | -1 | --sox      | sox       | Merge audio files from playlist   |
+ | -v | --version  | version   | Show script version               |
+ | -h | --help     | help      | Show this message                 |
+ +----+------------+-----------+-----------------------------------+
 
   Example: yta download url or yta playlist url...
 
