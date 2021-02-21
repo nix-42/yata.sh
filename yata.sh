@@ -2,15 +2,14 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.1.0-rc4"
+__version="0.1.0"
 
 # General variables
 
 # quiet mode is the default mode
-ISQUIET="--quiet --console-title"
-# VERBOSE=0
+IS_QUIET="--quiet --console-title"
 
-DEFAULT_DIR="$HOME/Music/yata"
+DEFAULT_DIR="$HOME/Music"
 PLAYLIST_DIR="${DEFAULT_DIR}/playlists"
 UPLOADER_DIR="${DEFAULT_DIR}/uploader"
 
@@ -19,6 +18,7 @@ OUTPUT='%(uploader)s - %(title)s [%(id)s].%(ext)s'
 AUDIO_EXT='mp3'
 BITRATE='128K'
 SAMPLE_RATE='48000'
+SOX=false
 
 # Some variables to initialize colors for colorfull echo output
 DARK_BLUE='\033[34m'
@@ -48,6 +48,7 @@ cat << EOF
  | -s | --asr      | asr       | Set audio samplerate [default: 48000; 44000, 41000]       |
  | -p | --path     | path      | Set path [default: ~/Music/yata]                          |
  | -v | --verbose  | verbose   | Turn off quiet mode                                       |
+ | -1 | --sox      | sox       | Merge audio files from playlist                           |
  | -v | --version  | version   | Show script version                                       |
  | -h | --help     | help      | Show this message                                         |
  +----+------------+-----------+-----------------------------------------------------------+
@@ -60,7 +61,7 @@ EOF
 download() {
   echo "[yata]: Starting..."
   youtube-dl \
-  ${ISQUIET} \
+  ${IS_QUIET} \
   --format "bestaudio[asr = ${SAMPLE_RATE}]" \
   --ignore-errors \
   --no-continue \
@@ -71,8 +72,8 @@ download() {
   --audio-quality ${BITRATE} \
   --embed-thumbnail \
   --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
-  --output "${DEFAULT_DIR}/${AUDIO_EXT}/%(title)s.%(ext)s'" \
-  --exec 'echo "[yata]: {} is downloaded"' \
+  --output "${DEFAULT_DIR}/${AUDIO_EXT}/%(title)s.%(ext)s" \
+  --exec 'echo [yata]: {} is downloaded.' \
   $1 `# URL`
   echo "[yata]: All is done."
   exit 0
@@ -81,7 +82,7 @@ download() {
 download_playlist() {
   echo "[yata]: Starting to download playlist..."
   youtube-dl \
-  ${ISQUIET} \
+  ${IS_QUIET} \
   --format "bestaudio[asr = ${SAMPLE_RATE}]" \
   --ignore-errors \
   --no-continue \
@@ -93,9 +94,17 @@ download_playlist() {
   --audio-quality ${BITRATE} \
   --embed-thumbnail \
   --metadata-from-title "(?P<title>.+)" \
-  --output "${PLAYLIST_DIR}/%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s'" \
-  --exec 'echo "[yata]: {} is downloaded"' \
+  --output "${PLAYLIST_DIR}/%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s" \
+  --exec 'echo [yata]: {} is downloaded.' \
   $1 `# URL`
+  if [ "$SOX" = true ] ; then
+    # lmao, idk, but it's works 
+    PLAYLIST_TITLE=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
+    # files=${PLAYLIST_DIR}/${playlist_title}/*.${AUDIO_EXT}
+    echo "[sox]:  Starting to merge ${PLAYLIST_TITLE}."
+    sox "${PLAYLIST_DIR}/${PLAYLIST_TITLE}/*.${AUDIO_EXT}" "${DEFAULT_DIR}/${AUDIO_EXT}/${PLAYLIST_TITLE}.${AUDIO_EXT}"
+    echo "[sox]:  ${DEFAULT_DIR}/${AUDIO_EXT}/${PLAYLIST_TITLE}.${AUDIO_EXT} is merged."
+  fi
   echo "[yata]: All is done."
   exit 0
 }
@@ -105,13 +114,14 @@ err_msg() { echo -e "${RED}$1${NC}"; }
 __main__() {
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-      -h | --help | help) _help && exit 1;;
-      -v | --version | version) printf "$__version\n" && exit 1;;
-      -a | --audio | audio) AUDIO_EXT="$2" ;;
-      -b | --bitrate  | bitrate) BITRATE="$2" ;;
-      -d | --download | download) download "$2" ;;
-      -p | --playlist | playlist) download_playlist "$2";;
-      # *) err_msg "No such option: $1" ; exit 1 ;;
+      -d | --download | download) download $2 ;;
+      -p | --playlist | playlist) download_playlist $2 ;;
+      -a | --audio | audio) AUDIO_EXT=$2 ;;
+      -b | --bitrate | bitrate) BITRATE=$2 ;;
+      -1 | --sox | sox) SOX=true ;; 
+      -v | --version | version) printf "$__version\n" ; exit 1 ;;
+      -h | --help | help) _help ; exit 1 ;;
+      *) err_msg "No such option: $1" ; exit 1 ;;
     esac
     # case $* 
     #   err_msg "Input error, too many arguments.\nType yata [-h|--help|help] to see a list of all options." ; exit 1 ;;
