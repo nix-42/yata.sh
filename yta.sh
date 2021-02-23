@@ -2,12 +2,12 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.2.0"
+__version="0.2.1"
 
 # General variables
 
 # quiet mode is the default mode
-IS_QUIET="--quiet --console-title"
+IS_QUIET=''
 
 DEFAULT_DIR="$HOME/Music"
 PLAYLIST_DIR="${DEFAULT_DIR}/playlists"
@@ -32,7 +32,7 @@ _help() {
 
 echo -ne \
 "${DARK_BLUE}
- ▀▄▀ ▄▀▄ ▀█▀ ▄▀▄     
+ ▀▄▀ ▄▀▄ ▀█▀ ▄▀▄
   █  █▀█  █  █▀█.sh 
 ${NC}"
 echo -e "${BLUE}  Audio download script${NC}"
@@ -45,25 +45,29 @@ cat << EOF
  +----+------------+-----------+-----------------------------------+
  | -d | --download | download  | Download and convert single video |
  | -p | --playlist | playlist  | Download and convert playlist     |
- | -a | --audio    | audio     | Set audio extension               | 
+ | -a | --audio    | audio     | Set audio extension               |
  |    |            |           | [default: mp3; aac, flac...]      |
- | -b | --bitrate  | bitrate   | Set audio bitrate                 |  
+ | -b | --bitrate  | bitrate   | Set audio bitrate                 |
  |    |            |           | [default: 128K; 256K, 320K]       |
  | -s | --asr      | asr       | Set audio samplerate              |
  |    |            |           | [default: 48000; 44000, 41000]    |
  | -p | --path     | path      | Set path [default: ~/Music/yata]  |
- | -n | --noquiet  | noquiet   | Turn off quiet mode               |
+ | -q | --quiet    | quiet     | Turn off quiet mode               |
  | -1 | --sox      | sox       | Merge audio files from playlist   |
  | -v | --version  | version   | Show script version               |
  | -h | --help     | help      | Show this message                 |
  +----+------------+-----------+-----------------------------------+
 
-  Example: yta download url or yta playlist url...
+  Example: yta https://youtu.be/[url]
+           yta -p https://www.youtube.com/playlist?list=[url]
+           yta -a=aac -s=44000 -b=256 https://youtu.be/[url]
 
 EOF
 }
 
 download() {
+  [[ ${AUDIO_EXT} = mp3 ]] && local EMBED="--embed-thumbnail" || local EMBED="" 
+
   echo "[yata] Starting..."
   youtube-dl \
   ${IS_QUIET} \
@@ -75,7 +79,7 @@ download() {
   --extract-audio \
   --audio-format ${AUDIO_EXT} \
   --audio-quality ${BITRATE} \
-  --embed-thumbnail \
+  ${EMBED} \
   --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
   --output "${DEFAULT_DIR}/${AUDIO_EXT}/%(title)s.%(ext)s" \
   --exec 'echo [yata] {} is downloaded.' \
@@ -104,7 +108,7 @@ download_playlist() {
   --output "${PLAYLIST_DIR}/%(playlist)s/%(playlist_index)s %(title)s.%(ext)s" \
   --exec 'echo [yata] {} is downloaded.' \
   $1 `# URL` 2>/dev/null
-  if [ "$SOX" = true ] ; then
+  if [ ${SOX} = true ] ; then
     # lmao, idk, but it's works 
 
     # files=${PLAYLIST_DIR}/${playlist_title}/*.${AUDIO_EXT}
@@ -125,7 +129,7 @@ __main__() {
       -p | --playlist | playlist) PLAYLIST=true ; shift 2 ;;
       -a=* | --audio=* | audio=*) AUDIO_EXT="${argument#*=}" ; shift ;;
       -b=* | --bitrate=* | bitrate=*) BITRATE="${argument#*=}" ; shift ;;
-      -n | --noquiet | noquiet) IS_QUIET='' ; shift ;;
+      -q | --quiet | quiet) IS_QUIET='--quiet --console-title' ; shift ;;
       -1 | --sox | sox) SOX=true ; shift ;; 
       -v | --version | version) printf "$__version\n" ; exit 0 ;;
       -h | --help | help) _help ; exit 0 ;;
