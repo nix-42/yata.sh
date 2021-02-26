@@ -23,9 +23,8 @@ Clone this repository via git and move script to your local bin directory.
 
 Usage
 -----
-yta [OPTIONS] -d [URL]
+yta.sh [OPTIONS] [URL]
 
--d  --download  download   Download and convert single video 
 -p  --playlist  playlist   Download and convert playlist     
 -a  --audio     audio      Set audio extension                   
 -b  --bitrate   bitrate    Set audio bitrate                    
