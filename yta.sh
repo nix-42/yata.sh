@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.3.2"
+__version="0.3.3"
 
 # GENERAL
 
@@ -32,27 +32,24 @@ dep_status=0
 # default_jobs=5 wip
 
 # Color codes
-gr="\033[0;32m"  		#green
-br="\033[0;33m"		  #brown
-yl="\033[1;33m"		  #yellow
-pr="\033[0;35m"		  #purple
-bl="\033[0;34m"		  #blue
-rd="\033[0;31m"	    #red
-nc="\033[0;m"		    #white
-bold="\033[1m"  		#bold
-unbold="\033[m"  		#unbold
-dim="\033[2m"		    #dim
-ul="\033[4m"		    #underLine
+gr="\033[0;32m"   # green
+yl="\033[1;33m"   # yellow
+pr="\033[0;35m"   # purple
+bl="\033[34m"     # blue
+dbl="\033[1;34m"  # dark blue
+cy="\033[36m"     # cyan
+rd="\033[0;31m"   # red
+nc="\033[0;m"     # no color
+dim="\033[2m"     # dim
 
 banner() {
-cat << "EOF"
-             __             __   __
-  __ _____ _/ /____ _  ___ / /  / /
- / // / _ `/ __/ _ `/ (_-</ _ \/_/ 
- \_, /\_,_/\__/\_,_(_)___/_//_(_)  
-/___/ Audio download Posix script                    
-
-EOF
+echo -e \
+"${bl}             __             __   __ 
+  __ _____ _/ /____ _  ___ / /  / / 
+ / // / _ \`/ __/ _ \`/ (_-</ _ \/_/
+ \_, /\_,_/\__/\_,_(_)___/_//_(_)   
+/___/ ${dim}Audio download Posix script${nc}
+"
 }
 
 _help() {
@@ -92,14 +89,14 @@ dependencies_check()
 	if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
 }
 
-err_msg() { echo -e "${bold}${rd}[!] ${yl}$1${nc}"; }
+err_msg() { echo -e "${rd}[!] ${yl}$1${nc}"; }
 
 download() {
   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
-  echo -e "${bold}${bl}[yata]${nc} Starting..."
+  echo -e "${bl}[yata]${nc} Starting..."
   if [ $playlist = true ] ; then
     local playlist_title=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
-    echo -e "${bold}${bl}[yata]${nc} Playlist \"${playlist_title}\" is downloading."
+    echo -e "${bl}[yata]${nc} Playlist \"${playlist_title}\" is downloading."
     # parallel downloading
     # youtube-dl --get-id $1 | xargs -I '{}' -P $default_jobs 
     youtube-dl \
@@ -116,20 +113,20 @@ download() {
     ${embed} \
     --metadata-from-title "(?P<title>.+)" \
     --output "${playlist_dir}/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
-    --exec "echo -ne \"${bold}${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
+    --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
 
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
-      echo "${bold}${bl}[sox]${nc} Starting to merge ${playlist_title}."
+      echo "${bl}[sox]${nc} Starting to merge ${playlist_title}."
       sox "${playlist_dir}/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
-      echo "${bold}${bl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
+      echo "${bl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
     fi
 
     if [ $beets = true ] ; then
-      echo "${bold}${bl}[beets]${nc} Adding to library."
+      echo "${bl}[beets]${nc} Adding to library."
       beet import "${playlist_dir}/${playlist_title}"
-      echo "${bold}${bl}[beet]${nc} Import is done."
+      echo "${bl}[beet]${nc} Import is done."
     fi
   else
     youtube-dl \
@@ -145,19 +142,19 @@ download() {
     ${embed} \
     --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
     --output "${dir}/${audio_ext}/%(title)s.%(ext)s" \
-    --exec "echo -ne \"${bold}${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
+    --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
   fi
-  echo -e "${bold}${bl}[yata]${nc} All is done."
+  echo -e "${bl}[yata]${nc} All is done."
 }
 
 find() {
-  echo -e "${bold}${bl}[yata]${nc} Start to play."
+  echo -e "${bl}[yata]${nc} Start to play."
   ytfzf ${ytfzf_ops} -m $1
   if [ play = false ]; then
-    echo -e "${bold}${bl}[yata]${nc} Do you want to download it?"
+    echo -e "${bl}[yata]${nc} Do you want to download it?"
     read -n 1 -s -e -p '[y/N]> ' answer
-    [[ "$answer" != "${answer#[Yy]}" ]] && download $url || echo -e "${bold}${bl}[yata]${nc} All is done."; exit
+    [[ "$answer" != "${answer#[Yy]}" ]] && download $url || echo -e "${bl}[yata]${nc} All is done."; exit
   else 
     exit
   fi
