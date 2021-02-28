@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.3.1"
+__version="0.3.2"
 
 # GENERAL
 
@@ -83,12 +83,13 @@ Example: yta https://youtu.be/[url]
 EOF
 }
 
-dependencies_check() {
+dependencies_check()
+{
   local dep_status=0
-  if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
+	if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
   if [[ ! $(which ffmpeg) ]] 2>/dev/null ; then dep_status=1; err_msg "ffmpeg isn't installed."; fi
   # if [[ ! $(which sox) ]] 2>/dev/null ; then dep_status=1; err_msg "sox isn't installed."; fi
-  if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
+	if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
 }
 
 err_msg() { echo -e "${bold}${rd}[!] ${yl}$1${nc}"; }
@@ -115,8 +116,8 @@ download() {
     ${embed} \
     --metadata-from-title "(?P<title>.+)" \
     --output "${playlist_dir}/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
-    --exec 'echo -e \"${bl}[yata]${nc} [{}] is downloaded."' \
-    $1 `# URL` 2>/dev/null # 'https://youtube.com/watch?v={}' 
+    --exec "echo -ne \"${bold}${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
+    $1 `# URL` 2>/dev/null
 
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
@@ -144,7 +145,7 @@ download() {
     ${embed} \
     --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
     --output "${dir}/${audio_ext}/%(title)s.%(ext)s" \
-    --exec 'echo ${bl}[yata] {} is downloaded.${nc}' \
+    --exec "echo -ne \"${bold}${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
   fi
   echo -e "${bold}${bl}[yata]${nc} All is done."
