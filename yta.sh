@@ -83,13 +83,12 @@ Example: yta https://youtu.be/[url]
 EOF
 }
 
-dependencies_check()
-{
+dependencies_check() {
   local dep_status=0
-	if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
+  if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
   if [[ ! $(which ffmpeg) ]] 2>/dev/null ; then dep_status=1; err_msg "ffmpeg isn't installed."; fi
   # if [[ ! $(which sox) ]] 2>/dev/null ; then dep_status=1; err_msg "sox isn't installed."; fi
-	if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
+  if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
 }
 
 err_msg() { echo -e "${bold}${rd}[!] ${yl}$1${nc}"; }
