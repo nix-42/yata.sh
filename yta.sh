@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.3.3"
+__version="0.4.0"
 
 # GENERAL
 
@@ -90,13 +90,15 @@ dependencies_check()
 }
 
 err_msg() { echo -e "${rd}[!] ${yl}$1${nc}"; }
-
+ 
 download() {
+  # local done=false
   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
   echo -e "${bl}[yata]${nc} Starting..."
   if [ $playlist = true ] ; then
-    local playlist_title=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
-    echo -e "${bl}[yata]${nc} Playlist \"${playlist_title}\" is downloading."
+    # local playlist_title=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
+    local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
+    echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloading."
     # parallel downloading
     # youtube-dl --get-id $1 | xargs -I '{}' -P $default_jobs 
     youtube-dl \
@@ -112,21 +114,20 @@ download() {
     --audio-quality ${bitrate} \
     ${embed} \
     --metadata-from-title "(?P<title>.+)" \
-    --output "${playlist_dir}/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
+    --output "${playlist_dir}/${playlist_title}/%(track)s.%(ext)s" \
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
-
+    echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
-      echo "${bl}[sox]${nc} Starting to merge ${playlist_title}."
+      echo -e "${yl}[sox]${nc} Starting to merge ${gr}${playlist_title}${nc}."
       sox "${playlist_dir}/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
-      echo "${bl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
+      echo -e "${yl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
     fi
-
     if [ $beets = true ] ; then
-      echo "${bl}[beets]${nc} Adding to library."
+      echo -e "${yl}[beets]${nc} Adding to library."
       beet import "${playlist_dir}/${playlist_title}"
-      echo "${bl}[beet]${nc} Import is done."
+      echo -e "${yl}[beet]${nc} Import is done."
     fi
   else
     youtube-dl \
@@ -150,14 +151,12 @@ download() {
 
 find() {
   echo -e "${bl}[yata]${nc} Start to play."
-  ytfzf ${ytfzf_ops} -m $1
-  if [ play = false ]; then
-    echo -e "${bl}[yata]${nc} Do you want to download it?"
-    read -n 1 -s -e -p '[y/N]> ' answer
-    [[ "$answer" != "${answer#[Yy]}" ]] && download $url || echo -e "${bl}[yata]${nc} All is done."; exit
-  else 
-    exit
-  fi
+  url=`ytfzf -L "$@"`
+  ytfzf -am $url
+  echo -e "${bl}[yata]${nc} Do you want to download it?"
+  read -n 1 -s -e -p '[y/N]> ' answer
+  [[ "$answer" != "${answer#[Yy]}" ]] && download $url || echo -e "${bl}[yata]${nc} All is done."
+  exit
 }
 
 __main__() {
