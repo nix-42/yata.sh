@@ -2,14 +2,12 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.4.0"
+__version="0.4.1"
 
 # GENERAL
 
 ## Default directories
 dir="$HOME/Music"
-playlist_dir="${dir}/playlists"
-uploader_dir="${dir}/uploader"
 
 ## Output Template
 output='%(uploader)s - %(title)s [%(id)s].%(ext)s'
@@ -80,25 +78,24 @@ Example: yta https://youtu.be/[url]
 EOF
 }
 
-dependencies_check()
-{
+dependencies_check() {
   local dep_status=0
 	if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
   if [[ ! $(which ffmpeg) ]] 2>/dev/null ; then dep_status=1; err_msg "ffmpeg isn't installed."; fi
-  # if [[ ! $(which sox) ]] 2>/dev/null ; then dep_status=1; err_msg "sox isn't installed."; fi
+  if [[ ! $(which sox) ]] 2>/dev/null ; then dep_status=1; err_msg "sox isn't installed."; fi
 	if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
 }
 
-err_msg() { echo -e "${rd}[!] ${yl}$1${nc}"; }
+err_msg() { >&2 echo -e "${rd}[!] ${yl}$@${nc}"; }
  
 download() {
   # local done=false
   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
-  echo -e "${bl}[yata]${nc} Starting..."
   if [ $playlist = true ] ; then
     # local playlist_title=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
     local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
-    echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloading."
+    echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
+    echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
     # parallel downloading
     # youtube-dl --get-id $1 | xargs -I '{}' -P $default_jobs 
     youtube-dl \
@@ -114,22 +111,25 @@ download() {
     --audio-quality ${bitrate} \
     ${embed} \
     --metadata-from-title "(?P<title>.+)" \
-    --output "${playlist_dir}/${playlist_title}/%(track)s.%(ext)s" \
+    --output "${dir}/playlists/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
     echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
       echo -e "${yl}[sox]${nc} Starting to merge ${gr}${playlist_title}${nc}."
-      sox "${playlist_dir}/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
+      sox "${dir}/playlists/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
       echo -e "${yl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
     fi
     if [ $beets = true ] ; then
       echo -e "${yl}[beets]${nc} Adding to library."
-      beet import "${playlist_dir}/${playlist_title}"
+      beet import "${dir}/playlists/${playlist_title}"
       echo -e "${yl}[beet]${nc} Import is done."
     fi
   else
+    local title=`youtube-dl --get-title $1`
+    echo -e "[yata] Title ${gr}\"${title}\"${nc}"
+    echo -e "${bl}[yata]${nc} Downloading to ${dir}"
     youtube-dl \
     ${quiet} \
     --format "bestaudio[asr = ${sample_rate}]" \
@@ -165,9 +165,10 @@ __main__() {
     case $argument in
       -a=* | --audio=* | audio=*) audio_ext="${argument#*=}" ; shift ;;
       -b=* | --bitrate=* | bitrate=*) bitrate="${argument#*=}" ; shift ;;
-      -p=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
+      -P=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
       -f=* | --fzf=* | fzf=*) ytfzf_ops="${argument#*=}"; ytfzf=true; shift ;;
       -V | --verbose | verbose) quiet='' ; shift ;;
+      -P | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
       -x | --sox | sox) sox=true ; shift ;; 
       -f | --find | find) ytfzf=true; shift ;;
       -p | --playlist | playlist) playlist=true ; shift ;;
