@@ -6,20 +6,34 @@
 
 yata
 ====
-POSIX script for listen and downloading audio. 
+POSIX script for downloading audio from different sources.
+Originally used to replace youtube-dl aliases.
+Can also be used to search and listen to videos, so it's great to use it for podcasts. [youtube only]
 
 Features
 --------
 - Download audio from sources that provides youtube-dl.
 - Change audio quality as sample rate, bit rate, etc.
 - Merge audio files into one after playlist downloading using sox.
-- Find and listen music using ytfzf.
+- Find and listen video's audio using ytfzf.
 - Tag files and add it to local library. 
 - WIP
 
 Installation
 ------------
-Clone this repository via git and move script to your local bin directory.
+Clone this repository via git and move script to your local bin directory. 
+You can also use the script using the commands below, choose what you prefer most. [curl/wget]
+
+$ sh <(curl -fsSL git.io/yta.sh)
+$ sh <(wget -qO- git.io/yta.sh)
+
+It's simple to use, just paste in the options presented in the section `Usage` and that's it.
+Example: 
+
+sh <(...) [options] 
+sh <(...) version   # prints version
+
+In theory, you can even alias this to your shell config. But you already decide how you will be easier. 
 
 Usage
 -----
