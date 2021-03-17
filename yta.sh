@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.4.1"
+__version="0.4.2"
 
 # GENERAL
 
@@ -56,20 +56,21 @@ Description: CLI-wrapper for youtube-dl written on Shell
 Usage: $(basename $0) [options] -d [URL]
 
 Options:
--p  --playlist  playlist   Download and convert playlist     
--a  --audio     audio      Set audio extension               
-                           [default: mp3; aac, flac...]      
--b  --bitrate   bitrate    Set audio bitrate                 
-                           [default: 128K; 256K, 320K]       
--s  --asr       asr        Set audio samplerate              
-                           [default: 48000; 44000, 41000]    
--P  --path      path       Set path [default: ~/Music/yata]  
--V  --verbose   verbose    Turn off quiet mode               
--x  --sox       sox        Merge audio files from playlist   
--B  --beets     beets      Add to library and add tags   
--f  --find      find       Find music in Youtube using ytfzf    
--v  --version   version    Show script version               
--h  --help      help       Show this message                 
+-p  --playlist  playlist   Download and convert playlist
+-a  --audio     audio      Set audio extension
+                           [default: mp3; aac, flac...]
+-b  --bitrate   bitrate    Set audio bitrate
+                           [default: 128K; 256K, 320K]
+-s  --asr       asr        Set audio samplerate
+                           [default: 48000; 44000, 41000]
+-P  --path      path       Set path [default: ~/Music/yata]
+-V  --verbose   verbose    Turn off quiet mode
+-x  --sox       sox        Merge audio files from playlist
+-B  --beets     beets      Add to library and add tags
+-f  --find      find       Find music in Youtube using ytfzf
+-v  --version   version    -v for yta's version
+                           --version for yta's and youtube-dl version
+-h  --help      help       Show this help text
 
 Example: yta https://youtu.be/[url]
          yta -p https://www.youtube.com/playlist?list=[url]
@@ -78,21 +79,16 @@ Example: yta https://youtu.be/[url]
 EOF
 }
 
-dependencies_check() {
-  local dep_status=0
-	if [[ ! $(which youtube-dl) ]] 2>/dev/null ; then dep_status=1; err_msg "youtube-dl isn't installed."; fi
-  if [[ ! $(which ffmpeg) ]] 2>/dev/null ; then dep_status=1; err_msg "ffmpeg isn't installed."; fi
-  if [[ ! $(which sox) ]] 2>/dev/null ; then dep_status=1; err_msg "sox isn't installed."; fi
-	if [[ $dep_status -eq 1 ]]; then err_msg "Dependencies are not installed."; exit; fi
+dep_check() {
+  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; } done;
 }
 
-err_msg() { >&2 echo -e "${rd}[!] ${yl}$@${nc}"; }
+err_msg() { echo -en "${rd}[!] ${yl}$@${nc}\n"; exit; }
  
 download() {
   # local done=false
   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
   if [ $playlist = true ] ; then
-    # local playlist_title=`youtube-dl --no-warnings --dump-single-json $1 | jq -r '.title'`
     local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
     echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
     echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
@@ -117,17 +113,19 @@ download() {
     echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
+      dep_check "sox"
       echo -e "${yl}[sox]${nc} Starting to merge ${gr}${playlist_title}${nc}."
       sox "${dir}/playlists/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
       echo -e "${yl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
     fi
     if [ $beets = true ] ; then
+      dep_check "beets"
       echo -e "${yl}[beets]${nc} Adding to library."
       beet import "${dir}/playlists/${playlist_title}"
       echo -e "${yl}[beet]${nc} Import is done."
     fi
   else
-    local title=`youtube-dl --get-title $1`
+    local title=`youtube-dl --get-title $1` 
     echo -e "[yata] Title ${gr}\"${title}\"${nc}"
     echo -e "${bl}[yata]${nc} Downloading to ${dir}"
     youtube-dl \
@@ -150,8 +148,12 @@ download() {
 }
 
 find() {
-  echo -e "${bl}[yata]${nc} Start to play."
-  url=`ytfzf -L "$@"`
+  dep_check "ytfzf"
+  echo -e "${bl}[ytfzf]${nc} Searching for \"$1\""
+  local url=`ytfzf -L "$@"`
+  [[ $url = '' ]] && exit
+  local title=`youtube-dl --get-title $url`
+  echo -e "${bl}[yata]${nc} ${title} is playing."
   ytfzf -am $url
   echo -e "${bl}[yata]${nc} Do you want to download it?"
   read -n 1 -s -e -p '[y/N]> ' answer
@@ -160,12 +162,13 @@ find() {
 }
 
 __main__() {
+  dep_check "youtube-dl" "jq"
   while [[ "$#" -gt 0 ]]; do
     argument="$1"
     case $argument in
       -a=* | --audio=* | audio=*) audio_ext="${argument#*=}" ; shift ;;
       -b=* | --bitrate=* | bitrate=*) bitrate="${argument#*=}" ; shift ;;
-      -P=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
+      -p=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
       -f=* | --fzf=* | fzf=*) ytfzf_ops="${argument#*=}"; ytfzf=true; shift ;;
       -V | --verbose | verbose) quiet='' ; shift ;;
       -P | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
@@ -173,13 +176,14 @@ __main__() {
       -f | --find | find) ytfzf=true; shift ;;
       -p | --playlist | playlist) playlist=true ; shift ;;
       -B | --beets | beets) beets=true ; shift ;;
-      -v | --version | version) printf "$__version\n" ; exit ;;
+      -v | v) printf "yata: $__version\n"; exit ;;
+      --version | version) printf "yata: $__version\nyoutube-dl: `youtube-dl --version`\n" ; exit ;;
       -h | --help | help) _help ; exit ;;
-      -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." && exit ;;
-      *) dependencies_check; [[ $ytfzf = true ]] && find $argument || download $argument ; exit ;;
+      -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ;;
+      *) [[ $ytfzf = true ]] && find $argument || download $argument ; exit ;;
     esac
   done
-  err_msg "Something went wrong..." && exit;
+  err_msg "Something went wrong...";
 }
 
 [[ ${#} -eq 0 ]] && banner || __main__ "$@" 
