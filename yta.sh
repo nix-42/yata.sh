@@ -2,7 +2,7 @@
 # Author : Stanley <git.io/monesonn>
 
 # Script version
-__version="0.4.2"
+__version="0.X.X"
 
 # GENERAL
 
@@ -18,16 +18,17 @@ audio_ext='mp3'
 bitrate='128K'
 sample_rate='48000'
 
-# Flags
+# Variables
 playlist=false
 sox=false
 beets=false
 play=false
 ytfzf=false
 play=false
+parallel=false
 ytfzf_ops=''
 dep_status=0
-# default_jobs=5 wip
+default_jobs=5
 
 # Color codes
 gr="\033[0;32m"   # green
@@ -92,8 +93,6 @@ download() {
     local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
     echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
     echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
-    # parallel downloading
-    # youtube-dl --get-id $1 | xargs -I '{}' -P $default_jobs 
     youtube-dl \
     ${quiet} \
     --format "bestaudio[asr = ${sample_rate}]" \
@@ -147,6 +146,32 @@ download() {
   echo -e "${bl}[yata]${nc} All is done."
 }
 
+parallel_download() {
+   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
+  local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
+  echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
+  echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
+  youtube-dl --get-id $1 \
+  | xargs -I '{}' -P 5 \
+  youtube-dl \
+  ${quiet} \
+  --format "bestaudio[asr = ${sample_rate}]" \
+  --ignore-errors \
+  --no-continue \
+  --no-overwrites \
+  --add-metadata \
+  --extract-audio \
+  --audio-format ${audio_ext} \
+  --audio-quality ${bitrate} \
+  ${embed} \
+  --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
+  --output "${dir}/${playlist_title}/%(title)s.%(ext)s" \
+  --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
+  'https://youtube.com/watch?v={}' `# URL` 2>/dev/null
+  echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
+  echo -e "${bl}[yata]${nc} All is done."
+}
+
 find() {
   dep_check "ytfzf"
   echo -e "${bl}[ytfzf]${nc} Searching for \"$1\""
@@ -170,17 +195,19 @@ __main__() {
       -b=* | --bitrate=* | bitrate=*) bitrate="${argument#*=}" ; shift ;;
       -p=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
       -f=* | --fzf=* | fzf=*) ytfzf_ops="${argument#*=}"; ytfzf=true; shift ;;
+      # -v=* | --version=* | version=*) yta_version="${argument#*=}";
       -V | --verbose | verbose) quiet='' ; shift ;;
-      -P | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
+      -d | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
       -x | --sox | sox) sox=true ; shift ;; 
       -f | --find | find) ytfzf=true; shift ;;
       -p | --playlist | playlist) playlist=true ; shift ;;
+      -P | --parallel | parallel) parallel=true; shift ;;
       -B | --beets | beets) beets=true ; shift ;;
       -v | v) printf "yata: $__version\n"; exit ;;
       --version | version) printf "yata: $__version\nyoutube-dl: `youtube-dl --version`\n" ; exit ;;
       -h | --help | help) _help ; exit ;;
       -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ;;
-      *) [[ $ytfzf = true ]] && find $argument || download $argument ; exit ;;
+      *) [[ $ytfzf = true ]] && find $argument; [[ $parallel ]] && parallel_download $argument || download $argument ; exit ;;
     esac
   done
   err_msg "Something went wrong...";
