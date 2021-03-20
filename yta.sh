@@ -87,10 +87,10 @@ dep_check() {
 err_msg() { printf "%b\n" "${rd}[!] ${yl}$@${nc}"; }
  
 download() {
-  # local done=false
+  local url=$1
   [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
   if [ $playlist = true ] ; then
-    local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
+    local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $url | jq -r ".title"`
     printf "%b\n" "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
     printf "%b\n" "${bl}[yata]${nc} Downloading to ${playlist_dir}"
     youtube-dl \
@@ -108,7 +108,7 @@ download() {
     --metadata-from-title "(?P<title>.+)" \
     --output "${dir}/playlists/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
-    $1 `# URL` 2>/dev/null
+    $url 2>/dev/null
     printf "%b\n" "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
@@ -124,7 +124,7 @@ download() {
       printf "%b\n" "${yl}[beet]${nc} Import is done."
     fi
   else
-    local title=`youtube-dl --get-title $1` 
+    local title=`youtube-dl --get-title $url` 
     printf "%b\n" "[yata] Title ${gr}\"${title}\"${nc}"
     printf "%b\n" "${bl}[yata]${nc} Downloading to ${dir}"
     youtube-dl \
@@ -141,17 +141,18 @@ download() {
     --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
     --output "${dir}/${audio_ext}/%(title)s.%(ext)s" \
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
-    $1 `# URL` 2>/dev/null
+    $url 2>/dev/null
   fi
   printf "%b\n" "${bl}[yata]${nc} All is done."
 }
 
 parallel_download() {
-   [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
+  local url = $1
+  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
   local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
   printf "%b\n" "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
   printf "%b\n" "${bl}[yata]${nc} Downloading to ${playlist_dir}"
-  youtube-dl --get-id $1 \
+  youtube-dl --get-id $url \
   | xargs -I '{}' -P 5 \
   youtube-dl \
   ${quiet} \
@@ -195,7 +196,6 @@ __main__() {
       -b=* | --bitrate=* | bitrate=*) bitrate="${argument#*=}" ; shift ;;
       -p=* | --path=* | path=*) dir="${argument#*=}" ; shift ;;
       -f=* | --fzf=* | fzf=*) ytfzf_ops="${argument#*=}"; ytfzf=true; shift ;;
-      # -v=* | --version=* | version=*) yta_version="${argument#*=}";
       -V | --verbose | verbose) quiet='' ; shift ;;
       -d | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
       -x | --sox | sox) sox=true ; shift ;; 
