@@ -79,7 +79,9 @@ EOF
 }
 
 dep_check() {
-  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; } done;
+  local dep_status=false
+  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; [ $dep_status = false ] && dep_status=true; } done; 
+  [ $dep_status = true ] && err_msg "Install all of the above packages to make script work properly." && exit;
 }
 
 err_msg() { printf %b\\n "${rc}[!] ${yc}$@${nc}"; }
@@ -145,7 +147,7 @@ download() {
 }
 
 parallel_download() {
-  local url = $1
+  local url=$1
   [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
   local playlist_title="$(youtube-dl --no-warnings --flat-playlist --dump-single-json $url | jq -r ".title")"
   printf %b\\n "[yata] Playlist ${gc}\"${playlist_title}\"${nc}"
@@ -186,7 +188,7 @@ find() {
 }
 
 __main__() {
-  dep_check "youtube-dl" "jq"
+  dep_check "youtube-dl" "awk" "jq"
   while [ "$#" -gt 0 ]; do
     argument="$1"
     case $argument in
@@ -205,7 +207,11 @@ __main__() {
       --version | version) printf %s\\n%s\\n "yata: $__version" "youtube-dl: $(youtube-dl --version)" ; exit ;;
       -h | --help | help) _help ; exit ;;
       -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ;;
-      *) [ $ytfzf = true ] && find $argument; [ $parallel = true ] && parallel_download $argument || download $argument ; exit ;;
+      *) [ $ytfzf = true ] && find $argument; 
+      [ $parallel = true ] \
+      && parallel_download $argument \
+      || download $argument ; \
+      exit ;;
     esac
   done
   err_msg "Something went wrong...";
