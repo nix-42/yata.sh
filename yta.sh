@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # Author : Stanley <git.io/monesonn>
+# Description: .sh wrapper around youtube-dl for easier audio downloading.
 
 # Script version
-__version="0.X.X"
+__version="0.5.0"
 
 # GENERAL
 
@@ -27,7 +28,6 @@ ytfzf=false
 play=false
 parallel=false
 ytfzf_ops=''
-dep_status=0
 default_jobs=5
 
 # Color codes
@@ -42,7 +42,7 @@ nc="\033[0;m"     # no color
 dim="\033[2m"     # dim
 
 banner() {
-echo -e \
+printf "%b\n" \
 "${bl}             __             __   __ 
   __ _____ _/ /____ _  ___ / /  / / 
  / // / _ \`/ __/ _ \`/ (_-</ _ \/_/
@@ -81,18 +81,18 @@ EOF
 }
 
 dep_check() {
-  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; } done;
+  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; } done;  err_msg "Install required packages to make script work properly."; exit;
 }
 
-err_msg() { echo -en "${rd}[!] ${yl}$@${nc}\n"; exit; }
+err_msg() { printf "%b\n" "${rd}[!] ${yl}$@${nc}"; }
  
 download() {
   # local done=false
-  [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
+  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
   if [ $playlist = true ] ; then
     local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
-    echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
-    echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
+    printf "%b\n" "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
+    printf "%b\n" "${bl}[yata]${nc} Downloading to ${playlist_dir}"
     youtube-dl \
     ${quiet} \
     --format "bestaudio[asr = ${sample_rate}]" \
@@ -109,24 +109,24 @@ download() {
     --output "${dir}/playlists/${playlist_title}/%(playlist_index)s %(title)s.%(ext)s" \
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
-    echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
+    printf "%b\n" "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
     # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
       dep_check "sox"
-      echo -e "${yl}[sox]${nc} Starting to merge ${gr}${playlist_title}${nc}."
+      printf "%b\n" "${yl}[sox]${nc} Starting to merge ${gr}${playlist_title}${nc}."
       sox "${dir}/playlists/${playlist_title}/*.${audio_ext}" "${dir}/${audio_ext}/${playlist_title}.${audio_ext}"
-      echo -e "${yl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
+      printf "%b\n" "${yl}[sox]${nc} ${dir}/${audio_ext}/${playlist_title}.${audio_ext} is merged."
     fi
     if [ $beets = true ] ; then
       dep_check "beets"
-      echo -e "${yl}[beets]${nc} Adding to library."
+      printf "%b\n" "${yl}[beets]${nc} Adding to library."
       beet import "${dir}/playlists/${playlist_title}"
-      echo -e "${yl}[beet]${nc} Import is done."
+      printf "%b\n" "${yl}[beet]${nc} Import is done."
     fi
   else
     local title=`youtube-dl --get-title $1` 
-    echo -e "[yata] Title ${gr}\"${title}\"${nc}"
-    echo -e "${bl}[yata]${nc} Downloading to ${dir}"
+    printf "%b\n" "[yata] Title ${gr}\"${title}\"${nc}"
+    printf "%b\n" "${bl}[yata]${nc} Downloading to ${dir}"
     youtube-dl \
     ${quiet} \
     --format "bestaudio[asr = ${sample_rate}]" \
@@ -143,14 +143,14 @@ download() {
     --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
     $1 `# URL` 2>/dev/null
   fi
-  echo -e "${bl}[yata]${nc} All is done."
+  printf "%b\n" "${bl}[yata]${nc} All is done."
 }
 
 parallel_download() {
    [[ ${audio_ext} = mp3 ]] && local embed="--embed-thumbnail" || local embed="" 
   local playlist_title=`youtube-dl --no-warnings --flat-playlist --dump-single-json $1 | jq -r ".title"`
-  echo -e "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
-  echo -e "${bl}[yata]${nc} Downloading to ${playlist_dir}"
+  printf "%b\n" "[yata] Playlist ${gr}\"${playlist_title}\"${nc}"
+  printf "%b\n" "${bl}[yata]${nc} Downloading to ${playlist_dir}"
   youtube-dl --get-id $1 \
   | xargs -I '{}' -P 5 \
   youtube-dl \
@@ -166,23 +166,23 @@ parallel_download() {
   ${embed} \
   --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)" \
   --output "${dir}/${playlist_title}/%(title)s.%(ext)s" \
-  --exec "echo -ne \"${gr}[yata]${nc} \" && echo -n {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && echo \" is downloaded.\"" \
+  --exec "echo -ne \"${gr}[yata]${nc} \" && youtube-dl -e 'https://youtube.com/watch?v={}' is downloaded." \
   'https://youtube.com/watch?v={}' `# URL` 2>/dev/null
-  echo -e "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
-  echo -e "${bl}[yata]${nc} All is done."
+  printf "%b\n" "${bl}[yata]${nc} Playlist ${gr}\"${playlist_title}\"${nc} is downloaded."
+  printf "%b\n" "${bl}[yata]${nc} All is done."
 }
 
 find() {
   dep_check "ytfzf"
-  echo -e "${bl}[ytfzf]${nc} Searching for \"$1\""
+  printf "%b\n" "${bl}[ytfzf]${nc} Searching for \"$1\""
   local url=`ytfzf -L "$@"`
   [[ $url = '' ]] && exit
   local title=`youtube-dl --get-title $url`
-  echo -e "${bl}[yata]${nc} ${title} is playing."
+  printf "%b\n" "${bl}[yata]${nc} ${title} is playing."
   ytfzf -am $url
-  echo -e "${bl}[yata]${nc} Do you want to download it?"
+  printf "%b\n" "${bl}[yata]${nc} Do you want to download it?"
   read -n 1 -s -e -p '[y/N]> ' answer
-  [[ "$answer" != "${answer#[Yy]}" ]] && download $url || echo -e "${bl}[yata]${nc} All is done."
+  [ $answer != "${answer#[Yy]}" ] && download $url || printf "%b\n" "${bl}[yata]${nc} All is done."
   exit
 }
 
@@ -207,7 +207,7 @@ __main__() {
       --version | version) printf "yata: $__version\nyoutube-dl: `youtube-dl --version`\n" ; exit ;;
       -h | --help | help) _help ; exit ;;
       -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ;;
-      *) [[ $ytfzf = true ]] && find $argument; [[ $parallel ]] && parallel_download $argument || download $argument ; exit ;;
+      *) [ $ytfzf = true ] && find $argument; [ $parallel = true ] && parallel_download $argument || download $argument ; exit ;;
     esac
   done
   err_msg "Something went wrong...";
