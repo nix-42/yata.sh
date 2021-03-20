@@ -19,7 +19,7 @@ audio_ext='mp3'
 bitrate='128K'
 sample_rate='48000'
 
-# Variables
+## Variables
 playlist=false
 sox=false
 ytfzf=false
@@ -28,7 +28,7 @@ parallel=false
 ytfzf_ops=''
 default_jobs=5
 
-# Color codes
+## Color codes
 gc="\033[0;32m"   # green
 yc="\033[1;33m"   # yellow
 pc="\033[0;35m"   # purple
@@ -85,7 +85,7 @@ dep_check() {
 }
 
 err_msg() { printf %b\\n "${rc}[!] ${yc}$@${nc}"; }
- 
+
 download() {
   local url=$1
   [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
@@ -110,7 +110,6 @@ download() {
     --exec "printf %b \"${gc}[yata]${nc} \" && printf %s {} | tr -d \'\\"'"'" | awk -F \"/\" '"'{printf $NF}'"' && printf '%s\n' \" is downloaded.\"" \
     $url 2>/dev/null
     printf %b\\n "${bc}[yata]${nc} Playlist ${gc}\"${playlist_title}\"${nc} is downloaded."
-    # lmao, idk, but it's works 
     if [ $sox = true ] ;  then
       dep_check "sox"
       printf %b\\n "${yc}[sox]${nc} Starting to merge ${gc}${playlist_title}${nc}."
