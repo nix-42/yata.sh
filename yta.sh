@@ -8,7 +8,7 @@ __version="0.5.0"
 # GENERAL
 
 ## Default directories
-dir="$HOME/Music"
+dir="$HOME/music"
 
 ## Output Template
 output='%(uploader)s - %(title)s [%(id)s].%(ext)s'
@@ -91,6 +91,7 @@ download() {
   [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
   if [ $playlist = true ] ; then
     local playlist_title="$(youtube-dl --no-warnings --flat-playlist --dump-single-json $url | jq -r ".title")"
+    local playlist_dir="$dir/playlist"
     printf %b\\n "[yata] Playlist ${gc}\"${playlist_title}\"${nc}"
     printf %b\\n "${bc}[yata]${nc} Downloading to ${playlist_dir}"
     youtube-dl \
