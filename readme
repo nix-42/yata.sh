@@ -59,10 +59,10 @@ Options:
                            --version for yta's and youtube-dl version
 -h  --help      help       Show this help text
 
-Example: yta https://youtu.be/[url]
-         yta -p https://www.youtube.com/playlist?list=[url]
-         yta -a=aac -s=44000 -b=256 https://youtu.be/[url]
-         yta -f "Title in Youtube"    
+Example: yta [url]
+         yta -p [playlist url]
+         yta -a=aac -s=44000 -b=256 [url]
+         yta -f "Title in Youtube"
 
 Dependencies
 ------------
