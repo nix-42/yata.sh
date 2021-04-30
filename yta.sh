@@ -66,7 +66,7 @@ Options:
 -V  --verbose   verbose    Turn off quiet mode
 -x  --sox       sox        Merge audio files from playlist
 -B  --beets     beets      Add to library and add tags
--f  --find      find       Find music in Youtube using ytfzf
+-f  --find      find       Find videos in Youtube using ytfzf
 -v  --version   version    -v for yta's version
                            --version for yta's and youtube-dl version
 -h  --help      help       Show this help text
