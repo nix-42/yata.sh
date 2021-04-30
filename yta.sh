@@ -52,7 +52,7 @@ printf %b\\n \
 _help() {
 cat << EOF
 Description: CLI-wrapper for youtube-dl written on Shell
-Usage: $(basename $0) [options] -d [URL]
+Usage: $(basename $0) [options] [URL]
 
 Options:
 -p  --playlist  playlist   Download and convert playlist
