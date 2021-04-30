@@ -21,8 +21,10 @@ Features
 
 Installation
 ------------
-Clone this repository via git and move script to your local bin directory. 
-You can also use the script using the commands below, choose what you prefer most. [curl/wget]
+Clone this repository via git and move script to your local bin directory. [exported in PATH] 
+
+You can also use the script without installation [in both cases, you need required dependencies]
+Using the commands below, choose what you prefer most. [curl/wget]
 
 $ sh <(curl -fsSL git.io/yta.sh)
 $ sh <(wget -qO- git.io/yta.sh)
@@ -33,27 +35,46 @@ Example:
 sh <(...) [options] 
 sh <(...) version   # prints version
 
-In theory, you can even alias this to your shell config. But you already decide how you will be easier. 
+Additional, you can even alias this to your shell config.
+
+$ alias yta = 'sh <(curl -fsSL git.io/yta.sh)'
+
+But you already decide how you will be comfier. 
 
 Usage
 -----
 yta.sh [OPTIONS] [URL]
 
--p  --playlist  playlist   Download and convert playlist     
--a  --audio     audio      Set audio extension                   
--b  --bitrate   bitrate    Set audio bitrate                    
--s  --asr       asr        Set audio samplerate
--p  --path      path       Set path [default: ~/Music/yata]  
--q  --quiet     quiet      Turn off quiet mode               
--x  --sox       sox        Merge audio files from playlist   
--t  --beets     beets      Add to library and add tags   
--f  --find      find       Find music in youtube-dl using ytfzf    
--v  --version   version    Show script version               
--h  --help      help       Show this message       
+Options:
+-p  --playlist  playlist   Download and convert playlist
+-a  --audio     audio      Set audio extension [default: mp3; aac, flac...]
+-b  --bitrate   bitrate    Set audio bitrate [default: 128K; 256K, 320K]
+-s  --asr       asr        Set audio samplerate [default: 48000; 44000, 41000]
+-P  --path      path       Set path [default: ~/Music/yata]
+-V  --verbose   verbose    Turn off quiet mode
+-x  --sox       sox        Merge audio files from playlist
+-B  --beets     beets      Add to library and add tags
+-f  --find      find       Find videos in Youtube using ytfzf
+-v  --version   version    -v for yta's version
+                           --version for yta's and youtube-dl version
+-h  --help      help       Show this help text
+
+Example: yta https://youtu.be/[url]
+         yta -p https://www.youtube.com/playlist?list=[url]
+         yta -a=aac -s=44000 -b=256 https://youtu.be/[url]
+         yta -f "Title in Youtube"    
 
 Dependencies
 ------------
-- youtube-dl
-- ytfzf
-- sox
-- beets (optional)
+All dependencies except youtube-dl is optional:
+
+- youtube-dl 
+- ytfzf 
+- sox   
+- beets 
+
+Disclaimer
+----------
+There are no limitations, except of license.
+I am in no way encouraging you to violate the copyright of what you download.
+Use it wisely and respect copyrights.
