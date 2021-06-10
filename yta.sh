@@ -206,7 +206,7 @@ __main__() {
       -v | v) printf %s\\n "yata: $__version"; exit ;;
       --version | version) printf %s\\n%s\\n "yata: $__version" "youtube-dl: $(youtube-dl --version)" ; exit ;;
       -h | --help | help) _help ; exit ;;
-      -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ;;
+      -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ; exit ;;
       *) [ $ytfzf = true ] && find $argument; 
       [ $parallel = true ] \
       && parallel_download $argument \
