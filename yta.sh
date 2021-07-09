@@ -7,28 +7,28 @@ __version="0.5.0"
 
 # GENERAL
 
-## Default directories
+#:: Default directories
 dir="$HOME/music"
 
-## Output Template
+#:: Output Template
 output='%(uploader)s - %(title)s [%(id)s].%(ext)s'
 
-## Default variables
+#:: Default variables
 quiet='--quiet --console-title'
 audio_ext='mp3'
 bitrate='128K'
 sample_rate='48000'
 
-## Variables
+#:: Variables
 playlist=false
 sox=false
 ytfzf=false
-beets=false 
-parallel=false 
+beets=false
+parallel=false
 ytfzf_ops=''
 default_jobs=5
 
-## Color codes
+#:: Color codes
 gc="\033[0;32m"   # green
 yc="\033[1;33m"   # yellow
 pc="\033[0;35m"   # purple
@@ -40,13 +40,19 @@ nc="\033[0;m"     # no color
 dim="\033[2m"     # dim
 
 banner() {
-printf %b\\n \
-"${bc}             __             __   __ 
-  __ _____ _/ /____ _  ___ / /  / / 
- / // / _ \`/ __/ _ \`/ (_-</ _ \/_/
- \_, /\_,_/\__/\_,_(_)___/_//_(_)   
-/___/ ${dim}Audio download Posix script${nc}
-"
+#:: Encoded ASCII art with color codes.
+#:: I find it better solution instead of using `cat << EOF`
+
+#                __             __   __
+#     __ _____ _/ /____ _  ___ / /  / /
+#    / // / _ `/ __/ _ `/ (_-</ _ \/_/
+#    \_, /\_,_/\__/\_,_(_)___/_//_(_)
+#   /___/ Audio download Posix script
+#
+
+local encoded_ascii="G1szNG0gICAgICAgICAgICAgX18gICAgICAgICAgICAgX18gICBfXwogIF9fIF9fX19fIF8vIC9fX19fIF8gIF9fXyAvIC8gIC8gLyAKIC8gLy8gLyBfIGAvIF9fLyBfIGAvIChfLTwvIF8gXC9fLwogXF8sIC9cXyxfL1xfXy9cXyxfKF8pX19fL18vL18oXykgICAKL19fXy8gG1sybUF1ZGlvIGRvd25sb2FkIFBvc2l4IHNjcmlwdBtbMDttCgo="
+
+printf %b\\n $encoded_ascii | base64 -d
 }
 
 _help() {
@@ -80,7 +86,7 @@ EOF
 
 dep_check() {
   local dep_status=false
-  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; [ $dep_status = false ] && dep_status=true; } done; 
+  for dep in "$@"; do command -v "$dep" 1>/dev/null || { err_msg "$dep not found."; [ $dep_status = false ] && dep_status=true; } done;
   [ $dep_status = true ] && err_msg "Install all of the above packages to make script work properly." && exit;
 }
 
@@ -88,7 +94,7 @@ err_msg() { printf %b\\n "${rc}[!] ${yc}$@${nc}"; }
 
 download() {
   local url=$1
-  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
+  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed=""
   if [ $playlist = true ] ; then
     local playlist_title="$(youtube-dl --no-warnings --flat-playlist --dump-single-json $url | jq -r ".title")"
     local playlist_dir="$dir/playlist"
@@ -148,7 +154,7 @@ download() {
 
 parallel_download() {
   local url=$1
-  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed="" 
+  [ $audio_ext = mp3 ] && local embed="--embed-thumbnail" || local embed=""
   local playlist_title="$(youtube-dl --no-warnings --flat-playlist --dump-single-json $url | jq -r ".title")"
   printf %b\\n "[yata] Playlist ${gc}\"${playlist_title}\"${nc}"
   printf %b\\n "${bc}[yata]${nc} Downloading to ${playlist_dir}"
@@ -198,7 +204,7 @@ __main__() {
       -f=* | --fzf=* | fzf=*) ytfzf_ops="${argument#*=}" ; ytfzf=true; shift ;;
       -V | --verbose | verbose) quiet='' ; shift ;;
       -d | --path | path) dir="$PWD"; playlist_dir=$dir; shift ;;
-      -x | --sox | sox) sox=true ; shift ;; 
+      -x | --sox | sox) sox=true ; shift ;;
       -f | --find | find) ytfzf=true; shift ;;
       -p | --playlist | playlist) playlist=true ; shift ;;
       -P | --parallel | parallel) parallel=true; shift ;;
@@ -207,7 +213,7 @@ __main__() {
       --version | version) printf %s\\n%s\\n "yata: $__version" "youtube-dl: $(youtube-dl --version)" ; exit ;;
       -h | --help | help) _help ; exit ;;
       -* | --*) err_msg "No such option: $argument.\nType yta [-h|--help|help] to see a list of all options." ; exit ;;
-      *) [ $ytfzf = true ] && find $argument; 
+      *) [ $ytfzf = true ] && find $argument;
       [ $parallel = true ] \
       && parallel_download $argument \
       || download $argument ; \
@@ -217,4 +223,4 @@ __main__() {
   err_msg "Something went wrong...";
 }
 
-[ ${#} -eq 0 ] && banner || __main__ "$@" 
+[ ${#} -eq 0 ] && banner || __main__ "$@"
